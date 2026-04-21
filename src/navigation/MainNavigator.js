@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import CancionesScreen from '../screens/CancionesScreen';
 import DetalleCancionScreen from '../screens/DetalleCancionScreen';
+import TeleprompterScreen from '../screens/TeleprompterScreen';
 import SetlistsScreen from '../screens/SetlistsScreen';
 import AgendaScreen from '../screens/AgendaScreen';
 import GruposScreen from '../screens/GruposScreen';
@@ -21,6 +22,7 @@ function CancionesStack() {
     >
       <Stack.Screen name="ListaCanciones" component={CancionesScreen} options={{ title: 'Canciones' }} />
       <Stack.Screen name="DetalleCancion" component={DetalleCancionScreen} options={({ route }) => ({ title: route.params.cancion.titulo })} />
+      <Stack.Screen name="Teleprompter" component={TeleprompterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

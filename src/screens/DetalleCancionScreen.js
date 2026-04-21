@@ -106,7 +106,7 @@ export default function DetalleCancionScreen({ route, navigation }) {
 
       {/* Botón teleprompter */}
       {!modoEdicion && (
-        <TouchableOpacity style={styles.fabTeleprompter}>
+        <TouchableOpacity style={styles.fabTeleprompter} onPress={() => navigation.navigate('Teleprompter', { cancion: { ...cancion, ...form } })}>
           <Ionicons name="play" size={22} color="#fff" />
           <Text style={styles.fabText}>Teleprompter</Text>
         </TouchableOpacity>
