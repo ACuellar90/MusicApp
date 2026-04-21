@@ -4,34 +4,40 @@ import {
   Modal, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getCanciones } from '../database/db';
+import { getCanciones, getCancionesSetlist, addCancionSetlist, deleteCancionSetlist, updateOrdenSetlist } from '../database/db';
 
 export default function DetalleSetlistScreen({ route, navigation }) {
   const { setlist } = route.params;
-  const [canciones, setCanciones] = useState(setlist.canciones || []);
+  const [canciones, setCanciones] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [repertorio, setRepertorio] = useState([]);
 
   useEffect(() => {
     navigation.setOptions({ title: setlist.nombre });
+    cargarCanciones();
   }, []);
+
+  const cargarCanciones = () => {
+    setCanciones(getCancionesSetlist(setlist.id));
+  };
 
   const abrirModal = () => {
     const todas = getCanciones();
-    const ids = canciones.map(c => c.id);
+    const ids = getCancionesSetlist(setlist.id).map(c => c.id);
     setRepertorio(todas.filter(c => !ids.includes(c.id)));
     setModalVisible(true);
   };
 
   const agregarCancion = (cancion) => {
-    setCanciones(prev => [...prev, cancion]);
+    addCancionSetlist(setlist.id, cancion.id, canciones.length);
+    cargarCanciones();
     setModalVisible(false);
   };
 
-  const eliminarCancion = (id) => {
+  const eliminarCancion = (cancion_id) => {
     Alert.alert('Quitar', '¿Quitar esta canción del setlist?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Quitar', style: 'destructive', onPress: () => setCanciones(prev => prev.filter(c => c.id !== id)) }
+      { text: 'Quitar', style: 'destructive', onPress: () => { deleteCancionSetlist(setlist.id, cancion_id); cargarCanciones(); } }
     ]);
   };
 
@@ -40,6 +46,7 @@ export default function DetalleSetlistScreen({ route, navigation }) {
     const nueva = [...canciones];
     [nueva[index - 1], nueva[index]] = [nueva[index], nueva[index - 1]];
     setCanciones(nueva);
+    updateOrdenSetlist(setlist.id, nueva);
   };
 
   const moverAbajo = (index) => {
@@ -47,6 +54,7 @@ export default function DetalleSetlistScreen({ route, navigation }) {
     const nueva = [...canciones];
     [nueva[index + 1], nueva[index]] = [nueva[index], nueva[index + 1]];
     setCanciones(nueva);
+    updateOrdenSetlist(setlist.id, nueva);
   };
 
   const renderCancion = ({ item, index }) => (
@@ -72,7 +80,6 @@ export default function DetalleSetlistScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Info header */}
       <View style={styles.infoBar}>
         <Ionicons name="calendar-outline" size={16} color="#888" />
         <Text style={styles.infoText}>{setlist.fecha || 'Sin fecha'}</Text>
@@ -98,7 +105,6 @@ export default function DetalleSetlistScreen({ route, navigation }) {
         <Ionicons name="add" size={30} color="#fff" />
       </TouchableOpacity>
 
-      {/* Modal seleccionar canción */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>

@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { initDB } from '../database/db';
+import { initDB, getSetlists, addSetlist, deleteSetlist, getCancionesSetlist } from '../database/db';
 
 export default function SetlistsScreen({ navigation }) {
   const [setlists, setSetlists] = useState([]);
@@ -23,8 +23,12 @@ export default function SetlistsScreen({ navigation }) {
   }, []));
 
   const cargarSetlists = () => {
-    // TODO: cargar desde SQLite
-    setSetlists([]);
+    const data = getSetlists();
+    const conCanciones = data.map(s => ({
+      ...s,
+      canciones: getCancionesSetlist(s.id)
+    }));
+    setSetlists(conCanciones);
   };
 
   const guardarSetlist = () => {
@@ -32,17 +36,17 @@ export default function SetlistsScreen({ navigation }) {
       Alert.alert('Error', 'El nombre es obligatorio');
       return;
     }
-    // TODO: guardar en SQLite
-    setSetlists(prev => [...prev, { id: Date.now(), nombre, fecha, canciones: [] }]);
+    addSetlist(nombre, fecha);
     setNombre('');
     setFecha('');
     setModalVisible(false);
+    cargarSetlists();
   };
 
   const confirmarEliminar = (id, nombre) => {
     Alert.alert('Eliminar', `¿Eliminar "${nombre}"?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => setSetlists(prev => prev.filter(s => s.id !== id)) }
+      { text: 'Eliminar', style: 'destructive', onPress: () => { deleteSetlist(id); cargarSetlists(); } }
     ]);
   };
 
@@ -61,7 +65,8 @@ export default function SetlistsScreen({ navigation }) {
       </View>
       <Ionicons name="chevron-forward" size={20} color="#bbb" />
     </TouchableOpacity>
-);
+  );
+
   return (
     <View style={styles.container}>
       <FlatList

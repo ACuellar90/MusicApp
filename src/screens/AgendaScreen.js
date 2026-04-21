@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { initDB, getEventos, addEvento, deleteEvento } from '../database/db';
 
 const TIPOS = [
   { label: 'Misa', icon: 'church', color: '#7C3AED' },
@@ -18,7 +19,7 @@ export default function AgendaScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({ nombre: '', fecha: '', hora: '', lugar: '', tipo: 'Misa', notas: '' });
 
-  const cargarEventos = () => setEventos([]);
+  const cargarEventos = () => setEventos(getEventos());
 
   useEffect(() => { cargarEventos(); }, []);
   useFocusEffect(useCallback(() => { cargarEventos(); }, []));
@@ -28,7 +29,8 @@ export default function AgendaScreen() {
       Alert.alert('Error', 'Nombre y fecha son obligatorios');
       return;
     }
-    setEventos(prev => [...prev, { id: Date.now(), ...form }]);
+   addEvento(form);
+   cargarEventos();
     setForm({ nombre: '', fecha: '', hora: '', lugar: '', tipo: 'Misa', notas: '' });
     setModalVisible(false);
   };
@@ -36,7 +38,7 @@ export default function AgendaScreen() {
   const confirmarEliminar = (id, nombre) => {
     Alert.alert('Eliminar', `¿Eliminar "${nombre}"?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => setEventos(prev => prev.filter(e => e.id !== id)) }
+     { text: 'Eliminar', style: 'destructive', onPress: () => { deleteEvento(id); cargarEventos(); } }
     ]);
   };
 
