@@ -8,6 +8,7 @@ import SetlistsScreen from '../screens/SetlistsScreen';
 import AgendaScreen from '../screens/AgendaScreen';
 import GruposScreen from '../screens/GruposScreen';
 import DetalleSetlistScreen from '../screens/DetalleSetlistScreen';
+import DetalleEventoScreen from '../screens/DetalleEventoScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -43,6 +44,21 @@ function SetlistsStack() {
   );
 }
 
+function AgendaStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: { backgroundColor: '#fff' },
+        headerTintColor: '#7C3AED',
+        headerTitleStyle: { fontWeight: 'bold' },
+      }}
+    >
+      <Stack.Screen name="ListaAgenda" component={AgendaScreen} options={{ title: 'Agenda' }} />
+      <Stack.Screen name="DetalleEvento" component={DetalleEventoScreen} options={({ route }) => ({ title: route.params.evento.nombre })} />
+    </Stack.Navigator>
+  );
+}
+
 export default function MainNavigator() {
   return (
     <Tab.Navigator
@@ -67,7 +83,7 @@ export default function MainNavigator() {
     >
       <Tab.Screen name="Canciones" component={CancionesStack} />
       <Tab.Screen name="Setlists" component={SetlistsStack} />
-      <Tab.Screen name="Agenda" component={AgendaScreen} />
+      <Tab.Screen name="Agenda" component={AgendaStack} />
       <Tab.Screen name="Grupos" component={GruposScreen} />
     </Tab.Navigator>
   );

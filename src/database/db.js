@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabaseSync('musicapp3.db');
+const db = SQLite.openDatabaseSync('musicapp4.db');
 
 export const initDB = () => {
   db.withTransactionSync(() => {
@@ -49,6 +49,7 @@ export const initDB = () => {
       lugar TEXT,
       tipo TEXT DEFAULT 'Otro',
       notas TEXT,
+      setlist_id INTEGER,
       fecha_creacion TEXT DEFAULT (datetime('now'))
     )`);
   });
@@ -138,6 +139,18 @@ export const addEvento = (evento) => {
 
 export const deleteEvento = (id) => {
   return db.runSync('DELETE FROM eventos WHERE id = ?', [id]);
+};
+
+export const vincularSetlistEvento = (evento_id, setlist_id) => {
+  return db.runSync('UPDATE eventos SET setlist_id = ? WHERE id = ?', [setlist_id, evento_id]);
+};
+
+export const getEventoConSetlist = (evento_id) => {
+  return db.getFirstSync(`
+    SELECT e.*, s.nombre as setlist_nombre FROM eventos e
+    LEFT JOIN setlists s ON e.setlist_id = s.id
+    WHERE e.id = ?
+  `, [evento_id]);
 };
 
 export default db;

@@ -14,7 +14,7 @@ const TIPOS = [
   { label: 'Otro', icon: 'calendar', color: '#FF9800' },
 ];
 
-export default function AgendaScreen() {
+export default function AgendaScreen({ navigation }) {
   const [eventos, setEventos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [form, setForm] = useState({ nombre: '', fecha: '', hora: '', lugar: '', tipo: 'Misa', notas: '' });
@@ -47,7 +47,9 @@ export default function AgendaScreen() {
   const renderEvento = ({ item }) => {
     const tipo = getTipo(item.tipo);
     return (
-      <TouchableOpacity style={styles.card} onLongPress={() => confirmarEliminar(item.id, item.nombre)}>
+      <TouchableOpacity style={styles.card} 
+        onPress={() => navigation.navigate('DetalleEvento', { evento: item })}
+        onLongPress={() => confirmarEliminar(item.id, item.nombre)}>
         <View style={[styles.cardIcon, { backgroundColor: tipo.color + '22' }]}>
           <Ionicons name={tipo.icon} size={24} color={tipo.color} />
         </View>
