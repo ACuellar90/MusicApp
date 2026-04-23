@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 
-const db = SQLite.openDatabaseSync('musicapp4.db');
+const db = SQLite.openDatabaseSync('musicapp5.db');
 
 export const initDB = () => {
   db.withTransactionSync(() => {
@@ -12,18 +12,23 @@ export const initDB = () => {
       bpm INTEGER,
       letra TEXT,
       acordes TEXT,
-      categoria TEXT DEFAULT 'General',
       fecha_creacion TEXT DEFAULT (datetime('now'))
     )`);
 
     db.runSync(`CREATE TABLE IF NOT EXISTS categorias (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre TEXT NOT NULL UNIQUE
+      nombre TEXT NOT NULL,
+      padre_id INTEGER,
+      FOREIGN KEY (padre_id) REFERENCES categorias(id)
     )`);
 
-    db.runSync(`INSERT OR IGNORE INTO categorias (nombre) VALUES ('General')`);
-    db.runSync(`INSERT OR IGNORE INTO categorias (nombre) VALUES ('Misa')`);
-    db.runSync(`INSERT OR IGNORE INTO categorias (nombre) VALUES ('Concierto')`);
+    db.runSync(`CREATE TABLE IF NOT EXISTS cancion_categorias (
+      cancion_id INTEGER,
+      categoria_id INTEGER,
+      PRIMARY KEY (cancion_id, categoria_id),
+      FOREIGN KEY (cancion_id) REFERENCES canciones(id),
+      FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+    )`);
 
     db.runSync(`CREATE TABLE IF NOT EXISTS setlists (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -71,20 +76,44 @@ export const deleteCancion = (id) => {
   return db.runSync('DELETE FROM canciones WHERE id = ?', [id]);
 };
 
+// CATEGORIAS
 export const getCategorias = () => {
-  return db.getAllSync('SELECT * FROM categorias ORDER BY nombre ASC');
+  return db.getAllSync('SELECT * FROM categorias WHERE padre_id IS NULL ORDER BY nombre ASC');
 };
 
-export const addCategoria = (nombre) => {
-  return db.runSync('INSERT OR IGNORE INTO categorias (nombre) VALUES (?)', [nombre]);
+export const getSubcategorias = (padre_id) => {
+  return db.getAllSync('SELECT * FROM categorias WHERE padre_id = ? ORDER BY nombre ASC', [padre_id]);
 };
 
-export const updateCancion = (id, cancion) => {
-  const { titulo, artista, tono, bpm, letra, acordes, categoria } = cancion;
-  return db.runSync(
-    'UPDATE canciones SET titulo=?, artista=?, tono=?, bpm=?, letra=?, acordes=?, categoria=? WHERE id=?',
-    [titulo, artista || '', tono || '', bpm || null, letra || '', acordes || '', categoria || 'General', id]
-  );
+export const addCategoria = (nombre, padre_id = null) => {
+  return db.runSync('INSERT INTO categorias (nombre, padre_id) VALUES (?, ?)', [nombre, padre_id]);
+};
+
+export const deleteCategoria = (id) => {
+  db.runSync('DELETE FROM categorias WHERE padre_id = ?', [id]);
+  db.runSync('DELETE FROM cancion_categorias WHERE categoria_id = ?', [id]);
+  db.runSync('DELETE FROM categorias WHERE id = ?', [id]);
+};
+
+export const updateCategoria = (id, nombre) => {
+  return db.runSync('UPDATE categorias SET nombre = ? WHERE id = ?', [nombre, id]);
+};
+
+// CATEGORIAS DE CANCION
+export const getCategoriasCancion = (cancion_id) => {
+  return db.getAllSync(`
+    SELECT c.* FROM categorias c
+    JOIN cancion_categorias cc ON c.id = cc.categoria_id
+    WHERE cc.cancion_id = ?
+  `, [cancion_id]);
+};
+
+export const addCategoriaCancion = (cancion_id, categoria_id) => {
+  return db.runSync('INSERT OR IGNORE INTO cancion_categorias (cancion_id, categoria_id) VALUES (?, ?)', [cancion_id, categoria_id]);
+};
+
+export const removeCategoriaCancion = (cancion_id, categoria_id) => {
+  return db.runSync('DELETE FROM cancion_categorias WHERE cancion_id = ? AND categoria_id = ?', [cancion_id, categoria_id]);
 };
 
 // SETLISTS

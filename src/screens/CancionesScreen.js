@@ -83,6 +83,12 @@ export default function CancionesScreen({ navigation }) {
         />
       </View>
 
+      <TouchableOpacity style={styles.categoriasBtn} onPress={() => navigation.navigate('Categorias')}>
+        <Ionicons name="folder-outline" size={16} color="#7C3AED" />
+        <Text style={styles.categoriasBtnText}>Gestionar categorías</Text>
+        <Ionicons name="chevron-forward" size={16} color="#7C3AED" />
+      </TouchableOpacity>
+
       {/* Filtro categorías */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtros}>
         {categorias.map(cat => (
@@ -192,4 +198,6 @@ const styles = StyleSheet.create({
   btnCancelarText: { color: '#888', fontWeight: 'bold' },
   btnGuardar: { flex: 1, padding: 14, borderRadius: 10, backgroundColor: '#7C3AED', alignItems: 'center' },
   btnGuardarText: { color: '#fff', fontWeight: 'bold' },
+  categoriasBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDE9FF', marginHorizontal: 16, marginBottom: 12, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, gap: 8, elevation: 1 },
+  categoriasBtnText: { flex: 1, color: '#7C3AED', fontSize: 15, fontWeight: '700' },
 });

@@ -9,6 +9,7 @@ import AgendaScreen from '../screens/AgendaScreen';
 import GruposScreen from '../screens/GruposScreen';
 import DetalleSetlistScreen from '../screens/DetalleSetlistScreen';
 import DetalleEventoScreen from '../screens/DetalleEventoScreen';
+import CategoriasScreen from '../screens/CategoriasScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,6 +26,7 @@ function CancionesStack() {
       <Stack.Screen name="ListaCanciones" component={CancionesScreen} options={{ title: 'Canciones' }} />
       <Stack.Screen name="DetalleCancion" component={DetalleCancionScreen} options={({ route }) => ({ title: route.params.cancion.titulo })} />
       <Stack.Screen name="Teleprompter" component={TeleprompterScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Categorias" component={CategoriasScreen} options={{ title: 'Mis Categorías' }} />
     </Stack.Navigator>
   );
 }
