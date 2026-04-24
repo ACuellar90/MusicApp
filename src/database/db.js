@@ -65,10 +65,10 @@ export const getCanciones = () => {
 };
 
 export const addCancion = (cancion) => {
-  const { titulo, artista, tono, bpm, letra, acordes, categoria } = cancion;
+  const { titulo, artista, tono, bpm, letra, acordes } = cancion;
   return db.runSync(
-    'INSERT INTO canciones (titulo, artista, tono, bpm, letra, acordes, categoria) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [titulo, artista || '', tono || '', bpm || null, letra || '', acordes || '', categoria || 'General']
+    'INSERT INTO canciones (titulo, artista, tono, bpm, letra, acordes) VALUES (?, ?, ?, ?, ?, ?)',
+    [titulo, artista || '', tono || '', bpm || null, letra || '', acordes || '']
   );
 };
 

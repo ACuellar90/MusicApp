@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Alert, Modal, ScrollView
+  TextInput, Alert, Modal, ScrollView, Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { initDB, getCanciones, addCancion, deleteCancion, getCategorias } from '../database/db';
+import { initDB, getCanciones, addCancion, deleteCancion, getCategorias, getSubcategorias, addCategoriaCancion, getCategoriasCancion } from '../database/db';
+
+const { height } = Dimensions.get('window');
 
 export default function CancionesScreen({ navigation }) {
   const [canciones, setCanciones] = useState([]);
@@ -13,7 +15,10 @@ export default function CancionesScreen({ navigation }) {
   const [busqueda, setBusqueda] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState('Todas');
   const [modalVisible, setModalVisible] = useState(false);
-  const [form, setForm] = useState({ titulo: '', artista: '', tono: '', bpm: '', categoria: 'General' });
+  const [form, setForm] = useState({ titulo: '', artista: '', tono: '', bpm: '' });
+  const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
+  const [todasCategorias, setTodasCategorias] = useState([]);
+  const [modalCats, setModalCats] = useState(false);
 
   useEffect(() => {
     initDB();
@@ -26,14 +31,30 @@ export default function CancionesScreen({ navigation }) {
 
   const cargarDatos = () => {
     setCanciones(getCanciones());
-    setCategorias([{ nombre: 'Todas' }, ...getCategorias()]);
+    const cats = getCategorias();
+    const todasFlat = [];
+    cats.forEach(cat => {
+      todasFlat.push({ ...cat, nivel: 0 });
+      const subs = getSubcategorias(cat.id);
+      subs.forEach(sub => {
+        todasFlat.push({ ...sub, nivel: 1 });
+        const subsubs = getSubcategorias(sub.id);
+        subsubs.forEach(subsub => {
+          todasFlat.push({ ...subsub, nivel: 2 });
+        });
+      });
+    });
+    setTodasCategorias(todasFlat);
+    setCategorias([{ nombre: 'Todas', id: 0 }, ...cats]);
   };
 
   const cancionesFiltradas = canciones.filter(c => {
     const coincideBusqueda = c.titulo.toLowerCase().includes(busqueda.toLowerCase()) ||
       (c.artista && c.artista.toLowerCase().includes(busqueda.toLowerCase()));
-    const coincideCategoria = categoriaFiltro === 'Todas' || c.categoria === categoriaFiltro;
-    return coincideBusqueda && coincideCategoria;
+    if (!coincideBusqueda) return false;
+    if (categoriaFiltro === 'Todas' || categoriaFiltro === 0) return true;
+    const catsCan = getCategoriasCancion(c.id);
+    return catsCan.some(cat => cat.id === categoriaFiltro || cat.padre_id === categoriaFiltro);
   });
 
   const guardarCancion = () => {
@@ -41,8 +62,13 @@ export default function CancionesScreen({ navigation }) {
       Alert.alert('Error', 'El título es obligatorio');
       return;
     }
-    addCancion(form);
-    setForm({ titulo: '', artista: '', tono: '', bpm: '', categoria: 'General' });
+    const result = addCancion(form);
+    const nuevaId = result.lastInsertRowId;
+    categoriasSeleccionadas.forEach(catId => {
+      addCategoriaCancion(nuevaId, catId);
+    });
+    setForm({ titulo: '', artista: '', tono: '', bpm: '' });
+    setCategoriasSeleccionadas([]);
     setModalVisible(false);
     cargarDatos();
   };
@@ -55,14 +81,18 @@ export default function CancionesScreen({ navigation }) {
   };
 
   const renderCancion = ({ item }) => (
-    <TouchableOpacity style={styles.card} 
+    <TouchableOpacity style={styles.card}
       onPress={() => navigation.navigate('DetalleCancion', { cancion: item })}
       onLongPress={() => confirmarEliminar(item.id, item.titulo)}>
       <View style={styles.cardLeft}>
         <Text style={styles.cardTitulo}>{item.titulo}</Text>
         <Text style={styles.cardSub}>{item.artista || 'Sin artista'}{item.tono ? ` • ${item.tono}` : ''}{item.bpm ? ` • ${item.bpm} BPM` : ''}</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.categoria}</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+          {getCategoriasCancion(item.id).slice(0, 2).map(cat => (
+            <View key={cat.id} style={styles.badge}>
+              <Text style={styles.badgeText}>{cat.nombre}</Text>
+            </View>
+          ))}
         </View>
       </View>
       <Ionicons name="chevron-forward" size={20} color="#bbb" />
@@ -83,6 +113,7 @@ export default function CancionesScreen({ navigation }) {
         />
       </View>
 
+      {/* Gestionar categorías */}
       <TouchableOpacity style={styles.categoriasBtn} onPress={() => navigation.navigate('Categorias')}>
         <Ionicons name="folder-outline" size={16} color="#7C3AED" />
         <Text style={styles.categoriasBtnText}>Gestionar categorías</Text>
@@ -90,14 +121,19 @@ export default function CancionesScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* Filtro categorías */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtros}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 4 }}
+        style={{ flexGrow: 0, marginBottom: 8 }}
+      >
         {categorias.map(cat => (
           <TouchableOpacity
-            key={cat.nombre}
-            style={[styles.filtroBtn, categoriaFiltro === cat.nombre && styles.filtroBtnActivo]}
-            onPress={() => setCategoriaFiltro(cat.nombre)}
+            key={cat.id}
+            style={[styles.filtroBtn, (categoriaFiltro === 'Todas' ? cat.id === 0 : categoriaFiltro === cat.id) && styles.filtroBtnActivo]}
+            onPress={() => setCategoriaFiltro(cat.id === 0 ? 'Todas' : cat.id)}
           >
-            <Text style={[styles.filtroText, categoriaFiltro === cat.nombre && styles.filtroTextActivo]}>
+            <Text style={[styles.filtroText, (categoriaFiltro === 'Todas' ? cat.id === 0 : categoriaFiltro === cat.id) && styles.filtroTextActivo]}>
               {cat.nombre}
             </Text>
           </TouchableOpacity>
@@ -109,6 +145,7 @@ export default function CancionesScreen({ navigation }) {
         data={cancionesFiltradas}
         keyExtractor={item => item.id.toString()}
         renderItem={renderCancion}
+        removeClippedSubviews={false}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="musical-notes-outline" size={60} color="#ccc" />
@@ -117,19 +154,21 @@ export default function CancionesScreen({ navigation }) {
           </View>
         }
         contentContainerStyle={{ paddingBottom: 100 }}
+        style={{ flex: 1 }}
       />
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Ionicons name="add" size={30} color="#fff" />
-      </TouchableOpacity>
+      {!modalVisible && !modalCats && (
+        <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
+          <Ionicons name="add" size={30} color="#fff" />
+        </TouchableOpacity>
+      )}
 
-      {/* Modal agregar */}
+      {/* Modal agregar canción */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitulo}>Nueva Canción</Text>
-
             <TextInput style={styles.input} placeholder="Título *" placeholderTextColor="#aaa"
               value={form.titulo} onChangeText={v => setForm({ ...form, titulo: v })} />
             <TextInput style={styles.input} placeholder="Artista" placeholderTextColor="#aaa"
@@ -138,22 +177,17 @@ export default function CancionesScreen({ navigation }) {
               value={form.tono} onChangeText={v => setForm({ ...form, tono: v })} />
             <TextInput style={styles.input} placeholder="BPM" placeholderTextColor="#aaa"
               keyboardType="numeric" value={form.bpm} onChangeText={v => setForm({ ...form, bpm: v })} />
-
-            <Text style={styles.label}>Categoría:</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-              {categorias.filter(c => c.nombre !== 'Todas').map(cat => (
-                <TouchableOpacity
-                  key={cat.nombre}
-                  style={[styles.filtroBtn, form.categoria === cat.nombre && styles.filtroBtnActivo]}
-                  onPress={() => setForm({ ...form, categoria: cat.nombre })}
-                >
-                  <Text style={[styles.filtroText, form.categoria === cat.nombre && styles.filtroTextActivo]}>
-                    {cat.nombre}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
+            <Text style={styles.label}>Categorías:</Text>
+            <TouchableOpacity style={styles.seleccionarCatsBtn} onPress={() => {
+              cargarDatos();
+              setModalCats(true);
+            }}>
+              <Ionicons name="folder-outline" size={18} color="#7C3AED" />
+              <Text style={styles.seleccionarCatsText}>
+                {categoriasSeleccionadas.length === 0 ? 'Seleccionar categorías' : `${categoriasSeleccionadas.length} seleccionada(s)`}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color="#7C3AED" />
+            </TouchableOpacity>
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
                 <Text style={styles.btnCancelarText}>Cancelar</Text>
@@ -165,6 +199,45 @@ export default function CancionesScreen({ navigation }) {
           </View>
         </View>
       </Modal>
+
+      {/* Modal seleccionar categorías */}
+      <Modal visible={modalCats} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, height: height * 0.7 }}>
+            <Text style={styles.modalTitulo}>Seleccionar Categorías</Text>
+            <ScrollView style={{ flex: 1, marginBottom: 12 }} contentContainerStyle={{ paddingBottom: 8 }}>
+              {todasCategorias.map(cat => {
+                const seleccionada = categoriasSeleccionadas.includes(cat.id);
+                const colores = ['#7C3AED', '#2196F3', '#E91E63', '#FF9800'];
+                const color = colores[cat.nivel] || '#888';
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[styles.catItem, { paddingLeft: 16 + cat.nivel * 16 }]}
+                    onPress={() => {
+                      if (seleccionada) {
+                        setCategoriasSeleccionadas(prev => prev.filter(id => id !== cat.id));
+                      } else {
+                        setCategoriasSeleccionadas(prev => [...prev, cat.id]);
+                      }
+                    }}
+                  >
+                    <View style={[styles.catCheck, seleccionada && { backgroundColor: color, borderColor: color }]}>
+                      {seleccionada && <Ionicons name="checkmark" size={14} color="#fff" />}
+                    </View>
+                    <Text style={[styles.catItemText, { color: seleccionada ? color : '#333' }]}>
+                      {cat.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            <TouchableOpacity style={{ backgroundColor: '#7C3AED', borderRadius: 10, padding: 14, alignItems: 'center' }} onPress={() => setModalCats(false)}>
+              <Text style={styles.btnGuardarText}>✓ Listo</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -173,16 +246,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#E8EAF0' },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', margin: 16, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, elevation: 2 },
   searchInput: { flex: 1, color: '#222', fontSize: 15 },
-  filtros: { paddingHorizontal: 16, marginBottom: 8, maxHeight: 40 },
-  filtroBtn: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: '#FFFFFF', marginRight: 8, elevation: 1 },
+  filtroBtn: { paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20, backgroundColor: '#fff', marginRight: 8, elevation: 1, height: 34, justifyContent: 'center' },
   filtroBtnActivo: { backgroundColor: '#7C3AED' },
   filtroText: { color: '#888', fontSize: 13 },
   filtroTextActivo: { color: '#fff', fontWeight: 'bold' },
-  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', marginHorizontal: 16, marginBottom: 10, borderRadius: 12, padding: 14, elevation: 2 },
+  card: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', marginHorizontal: 16, marginBottom: 10, borderRadius: 12, padding: 14, paddingBottom: 18, elevation: 2 },
   cardLeft: { flex: 1 },
   cardTitulo: { color: '#1A1A1A', fontSize: 16, fontWeight: 'bold' },
   cardSub: { color: '#888', fontSize: 13, marginTop: 2 },
-  badge: { marginTop: 6, alignSelf: 'flex-start', backgroundColor: '#EDE9FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  badge: { backgroundColor: '#EDE9FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { color: '#7C3AED', fontSize: 11, fontWeight: 'bold' },
   empty: { alignItems: 'center', marginTop: 80 },
   emptyText: { color: '#aaa', fontSize: 18, marginTop: 16 },
@@ -200,4 +272,9 @@ const styles = StyleSheet.create({
   btnGuardarText: { color: '#fff', fontWeight: 'bold' },
   categoriasBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDE9FF', marginHorizontal: 16, marginBottom: 12, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, gap: 8, elevation: 1 },
   categoriasBtnText: { flex: 1, color: '#7C3AED', fontSize: 15, fontWeight: '700' },
+  seleccionarCatsBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDE9FF', borderRadius: 10, padding: 12, marginBottom: 16, gap: 8 },
+  seleccionarCatsText: { flex: 1, color: '#7C3AED', fontSize: 14, fontWeight: '600' },
+  catItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0', gap: 10 },
+  catCheck: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#ccc', alignItems: 'center', justifyContent: 'center' },
+  catItemText: { fontSize: 14, fontWeight: '500' },
 });
