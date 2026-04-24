@@ -42,6 +42,7 @@ function SetlistsStack() {
     >
       <Stack.Screen name="ListaSetlists" component={SetlistsScreen} options={{ title: 'Setlists' }} />
       <Stack.Screen name="DetalleSetlist" component={DetalleSetlistScreen} />
+      <Stack.Screen name="Teleprompter" component={TeleprompterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

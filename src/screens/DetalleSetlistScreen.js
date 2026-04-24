@@ -58,7 +58,9 @@ export default function DetalleSetlistScreen({ route, navigation }) {
   };
 
   const renderCancion = ({ item, index }) => (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card}
+      onPress={() => navigation.navigate('Teleprompter', { cancion: item })}
+      onLongPress={() => eliminarCancion(item.id)}>
       <Text style={styles.numero}>{index + 1}</Text>
       <View style={styles.cardLeft}>
         <Text style={styles.cardTitulo}>{item.titulo}</Text>
@@ -75,7 +77,7 @@ export default function DetalleSetlistScreen({ route, navigation }) {
           <Ionicons name="close" size={20} color="#FF4444" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
