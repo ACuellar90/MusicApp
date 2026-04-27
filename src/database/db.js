@@ -182,4 +182,12 @@ export const getEventoConSetlist = (evento_id) => {
   `, [evento_id]);
 };
 
+export const updateCancion = (id, cancion) => {
+  const { titulo, artista, tono, bpm, letra, acordes } = cancion;
+  return db.runSync(
+    'UPDATE canciones SET titulo=?, artista=?, tono=?, bpm=?, letra=?, acordes=? WHERE id=?',
+    [titulo, artista || '', tono || '', bpm || null, letra || '', acordes || '', id]
+  );
+};
+
 export default db;
