@@ -123,11 +123,13 @@ export default function DetalleEventoScreen({ route, navigation }) {
                 <Text style={styles.setlistNombre}>{setlistVinculado.nombre}</Text>
               </View>
               {cancionesSetlist.map((c, index) => (
-                <View key={c.id} style={styles.cancionRow}>
+                <TouchableOpacity key={c.id} style={styles.cancionRow}
+                  onPress={() => navigation.navigate('Teleprompter', { cancion: c })}>
                   <Text style={styles.cancionNumero}>{index + 1}</Text>
                   <Text style={styles.cancionTitulo}>{c.titulo}</Text>
                   {c.tono ? <Text style={styles.cancionTono}>{c.tono}</Text> : null}
-                </View>
+                  <Ionicons name="play-circle-outline" size={20} color="#7C3AED" />
+                </TouchableOpacity>
               ))}
               <TouchableOpacity style={styles.cambiarBtn} onPress={abrirModalSetlist}>
                 <Text style={styles.cambiarBtnText}>Cambiar setlist</Text>

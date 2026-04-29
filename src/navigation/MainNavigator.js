@@ -58,6 +58,7 @@ function AgendaStack() {
     >
       <Stack.Screen name="ListaAgenda" component={AgendaScreen} options={{ title: 'Agenda' }} />
       <Stack.Screen name="DetalleEvento" component={DetalleEventoScreen} options={({ route }) => ({ title: route.params.evento.nombre })} />
+      <Stack.Screen name="Teleprompter" component={TeleprompterScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }
