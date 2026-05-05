@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, Modal
+  TextInput, Alert, Modal, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getCategorias, getSubcategorias, addCategoria, deleteCategoria, updateCategoria } from '../database/db';
 
-// Componente recursivo para renderizar nodos del árbol
 function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
   const [expandida, setExpandida] = useState(false);
   const [hijos, setHijos] = useState([]);
@@ -22,7 +21,6 @@ function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
     setHijos(getSubcategorias(categoria.id));
   };
 
-  const paddingLeft = 16 + nivel * 16;
   const colorNivel = nivel === 0 ? '#7C3AED' : nivel === 1 ? '#2196F3' : nivel === 2 ? '#E91E63' : '#FF9800';
 
   return (
@@ -30,10 +28,7 @@ function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
       <View style={[styles.nodoCard, { borderLeftColor: colorNivel, borderLeftWidth: 3 }]}>
         <TouchableOpacity style={styles.nodoMain} onPress={toggleExpandir}>
           <View style={{ width: nivel * 12 }} />
-          <Ionicons
-            name={expandida ? 'chevron-down' : 'chevron-forward'}
-            size={16} color={colorNivel}
-          />
+          <Ionicons name={expandida ? 'chevron-down' : 'chevron-forward'} size={16} color={colorNivel} />
           <Text style={[styles.nodoNombre, { color: nivel === 0 ? '#1A1A1A' : '#333' }]}>
             {categoria.nombre}
           </Text>
@@ -129,12 +124,7 @@ export default function CategoriasScreen() {
   const confirmarEliminar = (cat) => {
     Alert.alert('Eliminar', `¿Eliminar "${cat.nombre}" y todo su contenido?`, [
       { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar', style: 'destructive', onPress: () => {
-          deleteCategoria(cat.id);
-          cargarCategorias();
-        }
-      }
+      { text: 'Eliminar', style: 'destructive', onPress: () => { deleteCategoria(cat.id); cargarCategorias(); } }
     ]);
   };
 
@@ -167,42 +157,46 @@ export default function CategoriasScreen() {
 
       {/* Modal nueva */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>
-              {padreId ? 'Nueva Subcategoría' : 'Nueva Categoría'}
-            </Text>
-            <TextInput style={styles.input} placeholder="Nombre *"
-              placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={guardar}>
-                <Text style={styles.btnGuardarText}>Guardar</Text>
-              </TouchableOpacity>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitulo}>
+                {padreId ? 'Nueva Subcategoría' : 'Nueva Categoría'}
+              </Text>
+              <TextInput style={styles.input} placeholder="Nombre *"
+                placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
+              <View style={styles.modalBtns}>
+                <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
+                  <Text style={styles.btnCancelarText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnGuardar} onPress={guardar}>
+                  <Text style={styles.btnGuardarText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal editar */}
       <Modal visible={modalEditar} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Editar</Text>
-            <TextInput style={styles.input} placeholder="Nombre *"
-              placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalEditar(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={guardarEdicion}>
-                <Text style={styles.btnGuardarText}>Guardar</Text>
-              </TouchableOpacity>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitulo}>Editar</Text>
+              <TextInput style={styles.input} placeholder="Nombre *"
+                placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
+              <View style={styles.modalBtns}>
+                <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalEditar(false)}>
+                  <Text style={styles.btnCancelarText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.btnGuardar} onPress={guardarEdicion}>
+                  <Text style={styles.btnGuardarText}>Guardar</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
