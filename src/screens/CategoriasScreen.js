@@ -11,15 +11,11 @@ function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
   const [hijos, setHijos] = useState([]);
 
   const toggleExpandir = () => {
-    if (!expandida) {
-      setHijos(getSubcategorias(categoria.id));
-    }
+    if (!expandida) setHijos(getSubcategorias(categoria.id));
     setExpandida(!expandida);
   };
 
-  const recargarHijos = () => {
-    setHijos(getSubcategorias(categoria.id));
-  };
+  const recargarHijos = () => setHijos(getSubcategorias(categoria.id));
 
   const colorNivel = nivel === 0 ? '#7C3AED' : nivel === 1 ? '#2196F3' : nivel === 2 ? '#E91E63' : '#FF9800';
 
@@ -40,7 +36,7 @@ function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
           <TouchableOpacity onPress={() => onEditar(categoria, recargarHijos)} style={styles.accionBtn}>
             <Ionicons name="pencil-outline" size={16} color="#888" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => onEliminar(categoria)} style={styles.accionBtn}>
+          <TouchableOpacity onPress={() => onEliminar(categoria, recargarHijos)} style={styles.accionBtn}>
             <Ionicons name="trash-outline" size={16} color="#FF4444" />
           </TouchableOpacity>
         </View>
@@ -54,8 +50,8 @@ function NodoCategoria({ categoria, nivel, onAgregar, onEditar, onEliminar }) {
               categoria={hijo}
               nivel={nivel + 1}
               onAgregar={onAgregar}
-              onEditar={onEditar}
-              onEliminar={onEliminar}
+              onEditar={(cat, cb) => onEditar(cat, () => { recargarHijos(); if (cb) cb(); })}
+              onEliminar={(cat) => { onEliminar(cat); recargarHijos(); }}
             />
           ))}
           <TouchableOpacity
@@ -121,10 +117,16 @@ export default function CategoriasScreen() {
     cargarCategorias();
   };
 
-  const confirmarEliminar = (cat) => {
+  const confirmarEliminar = (cat, callback) => {
     Alert.alert('Eliminar', `¿Eliminar "${cat.nombre}" y todo su contenido?`, [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => { deleteCategoria(cat.id); cargarCategorias(); } }
+      {
+        text: 'Eliminar', style: 'destructive', onPress: () => {
+          deleteCategoria(cat.id);
+          if (callback) callback();
+          cargarCategorias();
+        }
+      }
     ]);
   };
 
@@ -155,7 +157,6 @@ export default function CategoriasScreen() {
         <Ionicons name="add" size={30} color="#fff" />
       </TouchableOpacity>
 
-      {/* Modal nueva */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
@@ -178,7 +179,6 @@ export default function CategoriasScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Modal editar */}
       <Modal visible={modalEditar} animationType="slide" transparent>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <View style={styles.modalOverlay}>
