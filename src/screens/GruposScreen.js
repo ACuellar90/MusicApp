@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Alert, Modal
+  TextInput, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -80,7 +80,6 @@ export default function GruposScreen() {
         }
       />
 
-      {/* Dos botones abajo */}
       <View style={styles.fabRow}>
         <TouchableOpacity style={styles.fabSecundario} onPress={() => setModalUnirse(true)}>
           <Ionicons name="enter-outline" size={22} color="#7C3AED" />
@@ -94,44 +93,52 @@ export default function GruposScreen() {
 
       {/* Modal crear grupo */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Nuevo Grupo</Text>
-            <TextInput style={styles.input} placeholder="Nombre del grupo *"
-              placeholderTextColor="#aaa" value={form.nombre} onChangeText={v => setForm({ ...form, nombre: v })} />
-            <TextInput style={styles.input} placeholder="Descripción (opcional)"
-              placeholderTextColor="#aaa" value={form.descripcion} onChangeText={v => setForm({ ...form, descripcion: v })} />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={crearGrupo}>
-                <Text style={styles.btnGuardarText}>Crear</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitulo}>Nuevo Grupo</Text>
+                <TextInput style={styles.input} placeholder="Nombre del grupo *"
+                  placeholderTextColor="#aaa" value={form.nombre} onChangeText={v => setForm({ ...form, nombre: v })} />
+                <TextInput style={styles.input} placeholder="Descripción (opcional)"
+                  placeholderTextColor="#aaa" value={form.descripcion} onChangeText={v => setForm({ ...form, descripcion: v })} />
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.btnCancelarText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnGuardar} onPress={crearGrupo}>
+                    <Text style={styles.btnGuardarText}>Crear</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal unirse */}
       <Modal visible={modalUnirse} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Unirme a un grupo</Text>
-            <Text style={styles.modalSub}>Pedile el código de invitación al administrador del grupo.</Text>
-            <TextInput style={styles.input} placeholder="Código de invitación"
-              placeholderTextColor="#aaa" autoCapitalize="characters"
-              value={codigo} onChangeText={setCodigo} />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalUnirse(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={unirseGrupo}>
-                <Text style={styles.btnGuardarText}>Unirme</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitulo}>Unirme a un grupo</Text>
+                <Text style={styles.modalSub}>Pedile el código de invitación al administrador del grupo.</Text>
+                <TextInput style={styles.input} placeholder="Código de invitación"
+                  placeholderTextColor="#aaa" autoCapitalize="characters"
+                  value={codigo} onChangeText={setCodigo} />
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalUnirse(false)}>
+                    <Text style={styles.btnCancelarText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnGuardar} onPress={unirseGrupo}>
+                    <Text style={styles.btnGuardarText}>Unirme</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

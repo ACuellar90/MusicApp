@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Alert, Modal, ScrollView, Dimensions
+  TextInput, Alert, Modal, ScrollView, Dimensions,
+  KeyboardAvoidingView, Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -101,7 +102,6 @@ export default function CancionesScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Buscador */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={18} color="#999" style={{ marginRight: 8 }} />
         <TextInput
@@ -113,14 +113,12 @@ export default function CancionesScreen({ navigation }) {
         />
       </View>
 
-      {/* Gestionar categorías */}
       <TouchableOpacity style={styles.categoriasBtn} onPress={() => navigation.navigate('Categorias')}>
         <Ionicons name="folder-outline" size={16} color="#7C3AED" />
         <Text style={styles.categoriasBtnText}>Gestionar categorías</Text>
         <Ionicons name="chevron-forward" size={16} color="#7C3AED" />
       </TouchableOpacity>
 
-      {/* Filtro categorías */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -140,7 +138,6 @@ export default function CancionesScreen({ navigation }) {
         ))}
       </ScrollView>
 
-      {/* Lista */}
       <FlatList
         data={cancionesFiltradas}
         keyExtractor={item => item.id.toString()}
@@ -157,7 +154,6 @@ export default function CancionesScreen({ navigation }) {
         style={{ flex: 1 }}
       />
 
-      {/* FAB */}
       {!modalVisible && !modalCats && (
         <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
           <Ionicons name="add" size={30} color="#fff" />
@@ -166,38 +162,48 @@ export default function CancionesScreen({ navigation }) {
 
       {/* Modal agregar canción */}
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Nueva Canción</Text>
-            <TextInput style={styles.input} placeholder="Título *" placeholderTextColor="#aaa"
-              value={form.titulo} onChangeText={v => setForm({ ...form, titulo: v })} />
-            <TextInput style={styles.input} placeholder="Artista" placeholderTextColor="#aaa"
-              value={form.artista} onChangeText={v => setForm({ ...form, artista: v })} />
-            <TextInput style={styles.input} placeholder="Tono (ej: Am, C, G)" placeholderTextColor="#aaa"
-              value={form.tono} onChangeText={v => setForm({ ...form, tono: v })} />
-            <TextInput style={styles.input} placeholder="BPM" placeholderTextColor="#aaa"
-              keyboardType="numeric" value={form.bpm} onChangeText={v => setForm({ ...form, bpm: v })} />
-            <Text style={styles.label}>Categorías:</Text>
-            <TouchableOpacity style={styles.seleccionarCatsBtn} onPress={() => {
-              cargarDatos();
-              setModalCats(true);
-            }}>
-              <Ionicons name="folder-outline" size={18} color="#7C3AED" />
-              <Text style={styles.seleccionarCatsText}>
-                {categoriasSeleccionadas.length === 0 ? 'Seleccionar categorías' : `${categoriasSeleccionadas.length} seleccionada(s)`}
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color="#7C3AED" />
-            </TouchableOpacity>
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={guardarCancion}>
-                <Text style={styles.btnGuardarText}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalOverlay}>
+            <ScrollView
+              contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitulo}>Nueva Canción</Text>
+                <TextInput style={styles.input} placeholder="Título *" placeholderTextColor="#aaa"
+                  value={form.titulo} onChangeText={v => setForm({ ...form, titulo: v })} />
+                <TextInput style={styles.input} placeholder="Artista" placeholderTextColor="#aaa"
+                  value={form.artista} onChangeText={v => setForm({ ...form, artista: v })} />
+                <TextInput style={styles.input} placeholder="Tono (ej: Am, C, G)" placeholderTextColor="#aaa"
+                  value={form.tono} onChangeText={v => setForm({ ...form, tono: v })} />
+                <TextInput style={styles.input} placeholder="BPM" placeholderTextColor="#aaa"
+                  keyboardType="numeric" value={form.bpm} onChangeText={v => setForm({ ...form, bpm: v })} />
+                <Text style={styles.label}>Categorías:</Text>
+                <TouchableOpacity style={styles.seleccionarCatsBtn} onPress={() => {
+                  cargarDatos();
+                  setModalCats(true);
+                }}>
+                  <Ionicons name="folder-outline" size={18} color="#7C3AED" />
+                  <Text style={styles.seleccionarCatsText}>
+                    {categoriasSeleccionadas.length === 0 ? 'Seleccionar categorías' : `${categoriasSeleccionadas.length} seleccionada(s)`}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={16} color="#7C3AED" />
+                </TouchableOpacity>
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.btnCancelarText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnGuardar} onPress={guardarCancion}>
+                    <Text style={styles.btnGuardarText}>Guardar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Modal seleccionar categorías */}

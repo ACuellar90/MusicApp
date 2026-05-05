@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Alert, Modal
+  TextInput, Alert, Modal, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -88,23 +88,27 @@ export default function SetlistsScreen({ navigation }) {
       </TouchableOpacity>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitulo}>Nuevo Setlist</Text>
-            <TextInput style={styles.input} placeholder="Nombre del setlist *"
-              placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
-            <TextInput style={styles.input} placeholder="Fecha (ej: 25/12/2026)"
-              placeholderTextColor="#aaa" value={fecha} onChangeText={setFecha} />
-            <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
-                <Text style={styles.btnCancelarText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.btnGuardar} onPress={guardarSetlist}>
-                <Text style={styles.btnGuardarText}>Crear</Text>
-              </TouchableOpacity>
-            </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <View style={styles.modalOverlay}>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }} keyboardShouldPersistTaps="handled">
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitulo}>Nuevo Setlist</Text>
+                <TextInput style={styles.input} placeholder="Nombre del setlist *"
+                  placeholderTextColor="#aaa" value={nombre} onChangeText={setNombre} />
+                <TextInput style={styles.input} placeholder="Fecha (ej: 25/12/2026)"
+                  placeholderTextColor="#aaa" value={fecha} onChangeText={setFecha} />
+                <View style={styles.modalBtns}>
+                  <TouchableOpacity style={styles.btnCancelar} onPress={() => setModalVisible(false)}>
+                    <Text style={styles.btnCancelarText}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.btnGuardar} onPress={guardarSetlist}>
+                    <Text style={styles.btnGuardarText}>Crear</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
