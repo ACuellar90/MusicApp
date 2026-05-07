@@ -5,6 +5,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { updateCancion, getCategorias, getSubcategorias, getCategoriasCancion, addCategoriaCancion, removeCategoriaCancion } from '../database/db';
+import * as ImagePicker from 'expo-image-picker';
+import TextRecognition from '@react-native-ml-kit/text-recognition';
 
 export default function DetalleCancionScreen({ route, navigation }) {
   const { cancion } = route.params;
@@ -48,6 +50,52 @@ export default function DetalleCancionScreen({ route, navigation }) {
     setTodasCategorias(todasFlat);
   };
 
+  const importarLetraFoto = async () => {
+    Alert.alert(
+      'Importar letra',
+      '¿Desde dónde querés importar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: '📷 Cámara', onPress: () => abrirFuente('camera') },
+        { text: '🖼️ Galería', onPress: () => abrirFuente('gallery') },
+      ]
+    );
+  };
+
+  const abrirFuente = async (fuente) => {
+    try {
+      let resultado;
+      if (fuente === 'camera') {
+        const permiso = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permiso.granted) {
+          Alert.alert('Error', 'Necesitamos permiso para usar la cámara');
+          return;
+        }
+        resultado = await ImagePicker.launchCameraAsync({ quality: 0.8 });
+      } else {
+        resultado = await ImagePicker.launchImageLibraryAsync({ quality: 0.8 });
+      }
+
+      if (resultado.canceled) return;
+
+      const uri = resultado.assets[0].uri;
+      const reconocimiento = await TextRecognition.recognize(uri);
+      const textoExtraido = reconocimiento.text;
+
+      if (!textoExtraido || textoExtraido.trim() === '') {
+        Alert.alert('Sin texto', 'No se encontró texto en la imagen');
+        return;
+      }
+
+      setForm(prev => ({ ...prev, letra: prev.letra ? prev.letra + '\n\n' + textoExtraido : textoExtraido }));
+      Alert.alert('✅ Listo', 'Letra importada correctamente');
+
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'No se pudo procesar la imagen');
+    }
+  };
+
   const guardarCambios = () => {
     if (!form.titulo.trim()) {
       Alert.alert('Error', 'El título es obligatorio');
@@ -64,7 +112,6 @@ export default function DetalleCancionScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Header info */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.titulo}>{cancion.titulo}</Text>
@@ -79,7 +126,6 @@ export default function DetalleCancionScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Toggle acordes */}
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggleBtn, !mostrarAcordes && styles.toggleBtnActivo]}
@@ -95,27 +141,35 @@ export default function DetalleCancionScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Contenido */}
       <ScrollView style={styles.scroll} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         {modoEdicion ? (
           <View>
             <Text style={styles.label}>Título *</Text>
             <TextInput style={styles.input} placeholderTextColor="#aaa"
               value={form.titulo} onChangeText={v => setForm({ ...form, titulo: v })} />
-            
+
             <Text style={styles.label}>Artista</Text>
             <TextInput style={styles.input} placeholderTextColor="#aaa"
               value={form.artista} onChangeText={v => setForm({ ...form, artista: v })} />
-            
+
             <Text style={styles.label}>Tono</Text>
             <TextInput style={styles.input} placeholder="ej: Am, C, G" placeholderTextColor="#aaa"
               value={form.tono} onChangeText={v => setForm({ ...form, tono: v })} />
-            
+
             <Text style={styles.label}>BPM</Text>
             <TextInput style={styles.input} keyboardType="numeric" placeholderTextColor="#aaa"
               value={form.bpm ? form.bpm.toString() : ''} onChangeText={v => setForm({ ...form, bpm: v })} />
 
-            <Text style={styles.label}>Letra</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, marginTop: 8 }}>
+              <Text style={styles.label}>Letra</Text>
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EDE9FF', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 }}
+                onPress={importarLetraFoto}
+              >
+                <Ionicons name="camera-outline" size={16} color="#7C3AED" />
+                <Text style={{ color: '#7C3AED', fontSize: 12, fontWeight: '600' }}>Importar desde foto</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput style={[styles.input, styles.inputMultiline]} multiline
               value={form.letra} onChangeText={v => setForm({ ...form, letra: v })}
               placeholder="Escribe la letra aquí..." placeholderTextColor="#aaa" />
@@ -153,7 +207,6 @@ export default function DetalleCancionScreen({ route, navigation }) {
         )}
       </ScrollView>
 
-      {/* Botón teleprompter */}
       {!modoEdicion && (
         <TouchableOpacity style={styles.fabTeleprompter} onPress={() => navigation.navigate('Teleprompter', { cancion: { ...cancion, ...form } })}>
           <Ionicons name="play" size={22} color="#fff" />
@@ -161,7 +214,6 @@ export default function DetalleCancionScreen({ route, navigation }) {
         </TouchableOpacity>
       )}
 
-      {/* Modal categorías */}
       <Modal visible={modalCats} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, height: '70%' }}>
@@ -202,8 +254,6 @@ export default function DetalleCancionScreen({ route, navigation }) {
     </View>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#E8EAF0' },
