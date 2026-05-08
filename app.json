@@ -21,7 +21,7 @@
         "backgroundColor": "#7C3AED"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.vocea.app"
+      "package": "com.acuellar.vocea"
     },
     "web": {
       "favicon": "./assets/icon.png"
